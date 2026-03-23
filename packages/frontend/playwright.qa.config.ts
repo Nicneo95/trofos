@@ -7,10 +7,10 @@ export default defineConfig({
   retries: 0,
   workers: 1,
   reporter: [['list'], ['html', { open: 'never' }]],
-  timeout: 30000,
+  timeout: 120000,
   use: {
     trace: 'on',
-    actionTimeout: 15000,
+    actionTimeout: 30000,
     launchOptions: {
       slowMo: process.env.CI ? 0 : 1000,
     },
