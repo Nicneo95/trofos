@@ -24,6 +24,14 @@ jobs:
       - name: Install dependencies
         run: pnpm install
 
+      - name: Verify secrets are set
+        run: |
+          if [ -z "$TEST_EMAIL" ]; then echo "QA_TEST_EMAIL is NOT set"; else echo "QA_TEST_EMAIL is set"; fi
+          if [ -z "$TEST_PASSWORD" ]; then echo "QA_TEST_PASSWORD is NOT set"; else echo "QA_TEST_PASSWORD is set"; fi
+        env:
+          TEST_EMAIL: ${{ secrets.QA_TEST_EMAIL }}
+          TEST_PASSWORD: ${{ secrets.QA_TEST_PASSWORD }}
+
       - name: Install Playwright browsers
         run: pnpm exec playwright install --with-deps chromium
         working-directory: packages/frontend
