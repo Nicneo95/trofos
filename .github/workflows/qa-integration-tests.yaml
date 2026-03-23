@@ -37,7 +37,7 @@ jobs:
         working-directory: packages/frontend
 
       - name: Run QA tests
-        run: pnpm exec playwright test --config=playwright.qa.config.ts
+        run: pnpm exec playwright test --config=playwright.qa.config.ts --reporter=list
         working-directory: packages/frontend
         env:
           TEST_EMAIL: ${{ secrets.QA_TEST_EMAIL }}
