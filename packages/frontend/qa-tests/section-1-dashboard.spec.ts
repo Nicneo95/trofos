@@ -5,33 +5,7 @@ import { test, expect } from '@playwright/test';
 
 test.describe('Section 1 - Dashboard Display, Sorting & Search', () => {
   test.beforeEach(async ({ page }) => {
-    // Get credentials from environment variables
-    const email = process.env.TEST_EMAIL!;
-    const password = process.env.TEST_PASSWORD!;
-    
-    // Navigate to TROFOS
     await page.goto('https://trofos-production.comp.nus.edu.sg/');
-    await page.waitForLoadState('networkidle');
-    
-    // Click Login button
-    await page.getByRole('button', { name: 'Login' }).click();
-    await page.waitForTimeout(5000);
-    
-    // Click NUS (Student) button
-    await page.getByRole('button', { name: 'NUS (Student)' }).click();
-    await page.waitForTimeout(5000);
-    
-    // Fill in email from environment variable
-    await page.getByRole('textbox', { name: 'User Account' }).fill(email);
-    
-    // Fill in password from environment variable
-    await page.getByRole('textbox', { name: 'Password' }).fill(password);
-    
-    // Click Sign in button
-    await page.getByRole('button', { name: 'Sign in' }).click();
-    
-    // Wait for redirect to dashboard
-    await page.waitForURL('**/');
     await page.waitForLoadState('networkidle');
   });
 
