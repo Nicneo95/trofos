@@ -1,9 +1,6 @@
 import { test as setup } from '@playwright/test';
-import { fileURLToPath } from 'url';
-import path from 'path';
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const authFile = path.join(__dirname, '.auth/user.json');
+const authFile = 'qa-tests/.auth/user.json';
 
 setup('authenticate', async ({ page }) => {
   const email = process.env.TEST_EMAIL!;
