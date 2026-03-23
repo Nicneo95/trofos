@@ -6,7 +6,11 @@ on:
 jobs:
   qa-integration-tests:
     runs-on: ubuntu-latest
-    timeout-minutes: 120
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -36,18 +40,18 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
         working-directory: packages/frontend
 
-      - name: Run QA tests
-        run: pnpm exec playwright test --config=playwright.qa.config.ts
+      - name: Run QA tests (shard ${{ matrix.shard }}/2)
+        run: pnpm exec playwright test --config=playwright.qa.config.ts --shard=${{ matrix.shard }}/2
         working-directory: packages/frontend
         env:
           TEST_EMAIL: ${{ secrets.QA_TEST_EMAIL }}
           TEST_PASSWORD: ${{ secrets.QA_TEST_PASSWORD }}
           CI: true
 
-      - name: Upload Playwright report
+      - name: Upload Playwright report (shard ${{ matrix.shard }})
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: qa-playwright-report
+          name: qa-playwright-report-shard-${{ matrix.shard }}
           path: packages/frontend/playwright-report/
           retention-days: 14
