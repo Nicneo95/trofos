@@ -1,0 +1,15 @@
+div.ant-select.backlog-user-select .ant-select-selector {
+  border-radius: 8px;
+  height: 34px;
+  transition: none;
+  outline: none;
+  box-shadow: none !important;
+}
+
+.ant-avatar.user-select-avatar {
+  margin-right: 8px;
+}
+
+.user-select-username-text {
+  margin-top: 1px;
+}

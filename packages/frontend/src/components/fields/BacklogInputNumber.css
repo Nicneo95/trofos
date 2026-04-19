@@ -1,0 +1,6 @@
+.backlog-inputnumber {
+  transition: none;
+  outline: none;
+  box-shadow: none !important;
+  border-radius: 8px 0 0 8px;
+}

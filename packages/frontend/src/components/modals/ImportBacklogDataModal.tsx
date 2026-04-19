@@ -1,0 +1,112 @@
+import { useState } from 'react';
+import { UploadOutlined } from '@ant-design/icons';
+import { Button, Modal, message, Upload, Space } from 'antd';
+import type { RcFile, UploadFile, UploadProps } from 'antd/es/upload/interface';
+import { useParams } from 'react-router-dom';
+import { useImportBacklogCsvMutation } from '../../api/backlog';
+import { getErrorMessage } from '../../helpers/error';
+
+const TEMPLATE_FILENAME = 'importBacklogData.xlsx';
+
+export default function ImportBacklogDataModal(): JSX.Element {
+  const params = useParams();
+  const projectId = Number(params.projectId);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [fileList, setFileList] = useState<UploadFile[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [importBacklogCsv] = useImportBacklogCsvMutation();
+
+  const showModal = () => {
+    setIsModalOpen(true);
+  };
+
+  const handleDownloadTemplate = async () => {
+    setIsDownloading(true);
+    try {
+      const response = await fetch(`/api/backlog/${projectId}/import/template`, {
+        credentials: 'include',
+      });
+      if (!response.ok) {
+        throw new Error('Failed to download template');
+      }
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = TEMPLATE_FILENAME;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      message.error('Failed to download template');
+    }
+    setIsDownloading(false);
+  };
+
+  const handleOk = async () => {
+    const formData = new FormData();
+    formData.append('file', fileList[0] as RcFile);
+    setIsUploading(true);
+    try {
+      await importBacklogCsv({
+        projectId,
+        payload: formData,
+      }).unwrap();
+      setFileList([]);
+      message.success('Backlogs imported successfully.');
+    } catch (error) {
+      message.error(getErrorMessage(error));
+    }
+    setIsUploading(false);
+    setIsModalOpen(false);
+  };
+
+  const handleCancel = () => {
+    setIsModalOpen(false);
+  };
+
+  const props: UploadProps = {
+    onRemove: (file) => {
+      const index = fileList.indexOf(file);
+      const newFileList = fileList.slice();
+      newFileList.splice(index, 1);
+      setFileList(newFileList);
+    },
+    beforeUpload: (file) => {
+      setFileList([file]);
+      return false;
+    },
+    fileList,
+  };
+
+  return (
+    <>
+      <Button type="primary" onClick={showModal}>
+        Import CSV Data
+      </Button>
+      <Modal
+        title="Import Backlogs from CSV Data"
+        okButtonProps={{
+          disabled: fileList.length === 0,
+          loading: isUploading,
+        }}
+        okText={isUploading ? 'Uploading' : 'Import'}
+        open={isModalOpen}
+        onOk={handleOk}
+        onCancel={handleCancel}
+      >
+        <Space direction="vertical">
+          {/* eslint-disable-next-line react/jsx-props-no-spreading */}
+          <Upload data-testid="upload-button" {...props}>
+            <Button icon={<UploadOutlined />}>Select File</Button>
+          </Upload>
+          <a onClick={handleDownloadTemplate} style={{ cursor: isDownloading ? 'wait' : 'pointer' }}>
+            {isDownloading ? 'Downloading...' : 'Download csv template'}
+          </a>
+        </Space>
+      </Modal>
+    </>
+  );
+}

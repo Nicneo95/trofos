@@ -1,0 +1,14 @@
+.backlog-card-summary {
+  display: flex;
+  flex: 1 1 0%;
+  word-break: break-all;
+}
+
+textarea.backlog-card-summary.ant-input {
+  border: none;
+  margin: 0 10px;
+}
+
+textarea.backlog-card-summary.ant-input-status-error {
+  border: 1px solid;
+}

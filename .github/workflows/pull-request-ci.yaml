@@ -1,0 +1,60 @@
+name: CI Test for Pull Request
+
+on:
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL_CI }}
+      POSTGRES_USER: ${{ secrets.POSTGRES_USER_CI }}
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD_CI }}
+      POSTGRES_DB: ${{ secrets.POSTGRES_DB_CI }}
+      AI_DATABASE_URL: ${{ secrets.AI_DATABASE_URL_CI }}
+      REDIS_URL: ${{ secrets.REDIS_URL }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - name: Setup node
+        uses: actions/setup-node@v3
+        with:
+          node-version: 'lts/hydrogen'
+          cache: 'pnpm'
+      - name: Install wait-on
+        run: pnpm i -g wait-on@6.0.1
+      - name: Setup Postgres container
+        run: pnpm run setup:ci
+      - name: Build and test backend
+        run: docker compose -f docker-compose-ci.yml build backend
+      - name: Build and test frontend
+        run: docker compose -f docker-compose-ci.yml build frontend
+      - name: Build hocus pocus server
+        run: docker compose -f docker-compose-ci.yml build hocus_pocus_server
+      - name: Build ai insight worker
+        run: docker compose -f docker-compose-ci.yml build ai_insight_worker
+      # e2e test currently removed from CI as it is unstable
+      # - name: Start backend and frontend
+      #   run: npm start &
+      # - name: Wait for backend and frontend to start
+      #   run: wait-on --timeout 120000 http://localhost:3000 http://localhost:3001
+      # - name: Run e2e test
+      #   run: |-
+      #     cd packages/backend
+      #     npm run test-e2e
+      - name: Clean up container
+        if: always()
+        run: pnpm run cleanup:ci
+      - name: Send notification on failure
+        if: failure()
+        run: |
+          message="[CI Failed]
+          Commit: ${{ github.sha }}
+          View full log here: https://github.com/Project-Trofos/trofos/actions/runs/${{ github.run_id }}
+          "
+          curl --data-urlencode "text=${message}" ${{ secrets.NOTIFICATION_API }}

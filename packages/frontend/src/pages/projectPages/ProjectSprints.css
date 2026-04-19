@@ -1,0 +1,25 @@
+.project-sprint-container {
+  padding: 8px;
+}
+
+.project-sprint-title-container {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0.7em;
+}
+
+.project-sprint-title {
+  margin-bottom: 0.2em !important;
+}
+
+.sprint-card-container {
+  cursor: pointer;
+}
+
+.sprint-list {
+  margin-bottom: 20px;
+}
+
+.epic-list {
+  margin-bottom: 20px;
+}

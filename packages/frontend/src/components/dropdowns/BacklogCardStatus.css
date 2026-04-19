@@ -1,0 +1,7 @@
+.backlog-card-status {
+  width: 100px;
+}
+
+.backlog-card-status.ant-select-single.ant-select-show-arrow .ant-select-selection-item {
+  padding-right: 0;
+}

@@ -1,0 +1,34 @@
+:root {
+  --default-box-shadow: 0 2px 2px rgb(0 0 0 / 5%);
+}
+
+body {
+  margin: 0;
+}
+
+.centralize-content {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+/* Style is added due to antd V5 adding margin on top of Title component. 
+https://github.com/ant-design/ant-design/issues/40021 */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin-top: 0;
+}
+
+.ant-card {
+  box-shadow: var(--default-box-shadow);
+}
+
+/* Make antd table more responsive */
+.ant-card-body {
+  overflow-x: auto;
+}

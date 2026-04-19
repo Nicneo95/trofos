@@ -1,0 +1,477 @@
+import express from 'express';
+import fs from 'fs';
+import { StatusCodes } from 'http-status-codes';
+import { UserSession } from '@prisma/client';
+import ExcelJS from 'exceljs';
+import course from '../services/course.service';
+import settings from '../services/settings.service';
+import { convertXlsxToCsv, addDropdownValidation, TEMPLATE_DATA_START_ROW, TEMPLATE_DATA_END_ROW } from '../helpers/xlsx';
+import {
+  assertCourseIdIsValid,
+  assertCourseNameIsValid,
+  assertCourseSemIsNumber,
+  assertCourseYearIsNumber,
+  assertProjectIdIsValid,
+  assertUserIdIsValid,
+  assertInputIsNotEmpty,
+  assertFileIsCorrectType,
+  getDefaultErrorRes,
+} from '../helpers/error';
+import {
+  assertCourseCodeIsValid,
+  assertGetAllOptionIsValid,
+  assertPaginationParamsAreValid,
+  assertProjectNameIsValid,
+  assertSortByIsValid,
+  assertUserSessionIsValid,
+} from '../helpers/error/assertions';
+import {
+  AddProjectAndCourseRequestBody,
+  BulkCreateProjectBody,
+  CourseRequestBody,
+  OptionRequestBody,
+  PaginatedRequestBody,
+  ProjectIdRequestBody,
+  UserEmailRequestBody,
+  UserIdRequestBody,
+} from './requestTypes';
+import { numberOrUndefined } from '../helpers/common';
+import csvService from '../services/csv.service';
+
+async function getAll(req: express.Request, res: express.Response) {
+  try {
+    const body = req.body as (OptionRequestBody & PaginatedRequestBody);
+    if (body.pageIndex === undefined) {
+      body.pageIndex = 0;
+    }
+    if (body.pageSize === undefined) {
+      body.pageSize = 30;
+    }
+
+    // If option is provided, it must be one of the following
+    assertGetAllOptionIsValid(body.option);
+    assertPaginationParamsAreValid(body.pageIndex, body.pageSize);
+    assertSortByIsValid(body.sortBy, ['course', 'year']);
+
+    // Default to all
+    const setting = await settings.get();
+    const result = await course.getAll(res.locals.policyConstraint, setting,
+      body.option ?? 'all', body.pageIndex, body.pageSize, body.keyword,
+      body.sortBy, body.ids);
+
+    return res.status(StatusCodes.OK).json(result);
+  } catch (error) {
+    return getDefaultErrorRes(error, res);
+  }
+}
+
+async function get(req: express.Request, res: express.Response) {
+  try {
+    const { courseId } = req.params;
+
+    const result = await course.getById(Number(courseId));
+
+    return res.status(StatusCodes.OK).json(result);
+  } catch (error) {
+    return getDefaultErrorRes(error, res);
+  }
+}
+
+async function create(req: express.Request, res: express.Response) {
+  try {
+    const body = req.body as CourseRequestBody;
+    const userSession = res.locals.userSession as UserSession | undefined;
+
+    assertUserSessionIsValid(userSession);
+    assertCourseYearIsNumber(body.courseStartYear);
+    assertCourseSemIsNumber(body.courseStartSem);
+    assertCourseYearIsNumber(body.courseEndYear);
+    assertCourseSemIsNumber(body.courseEndSem);
+    assertCourseNameIsValid(body.courseName);
+
+    const result = await course.create(
+      userSession.user_id,
+      body.courseName,
+      Number(body.courseStartYear),
+      Number(body.courseStartSem),
+      numberOrUndefined(body.courseEndYear),
+      numberOrUndefined(body.courseEndSem),
+      body.courseCode,
+      body.isPublic,
+      body.description,
+    );
+    return res.status(StatusCodes.OK).json(result);
+  } catch (error) {
+    return getDefaultErrorRes(error, res);
+  }
+}
+
+async function bulkCreate(req: express.Request, res: express.Response) {
+  try {
+    const body = req.body as BulkCreateProjectBody;
+
+    assertCourseIdIsValid(body.courseId);
+
+    body.projects.forEach((p) => {
+      assertProjectNameIsValid(p.projectName);
+      p.users.forEach((u) => assertUserIdIsValid(u.userId));
+    });
+
+    const result = await course.bulkCreate(body as Required<BulkCreateProjectBody>);
+
+    return res.status(StatusCodes.OK).json(result);
+  } catch (error) {
+    return getDefaultErrorRes(error, res);
+  }
+}
+
+async function update(req: express.Request, res: express.Response) {
+  try {
+    const { courseId } = req.params;
+    const body = req.body as Partial<Omit<CourseRequestBody, 'courseId'>>;
+
+    assertCourseIdIsValid(courseId);
+
+    if (Object.keys(body).length === 0) {
+      return res.status(StatusCodes.BAD_REQUEST).json({ error: 'Please provide fields to update!' });
+    }
+
+    const result = await course.update(
+      Number(courseId),
+      body.courseCode,
+      numberOrUndefined(body.courseStartYear),
+      numberOrUndefined(body.courseStartSem),
+      numberOrUndefined(body.courseEndYear),
+      numberOrUndefined(body.courseEndSem),
+      body.courseName,
+      body.isPublic,
+      body.description,
+    );
+    return res.status(StatusCodes.OK).json(result);
+  } catch (error) {
+    return getDefaultErrorRes(error, res);
+  }
+}
+
+async function remove(req: express.Request, res: express.Response) {
+  try {
+    const { courseId } = req.params;
+
+    assertCourseIdIsValid(courseId);
+
+    const result = await course.remove(Number(courseId));
+
+    return res.status(StatusCodes.OK).json(result);
+  } catch (error) {
+    return getDefaultErrorRes(error, res);
+  }
+}
+
+async function getUsers(req: express.Request, res: express.Response) {
+  try {
+    const { courseId } = req.params;
+
+    assertCourseIdIsValid(courseId);
+
+    const result = await course.getUsers(Number(courseId));
+
+    return res.status(StatusCodes.OK).json(result);
+  } catch (error) {
+    return getDefaultErrorRes(error, res);
+  }
+}
+
+async function addUser(req: express.Request, res: express.Response) {
+  try {
+    const { courseId } = req.params;
+    const body = req.body as UserEmailRequestBody;
+
+    assertCourseIdIsValid(courseId);
+    assertInputIsNotEmpty(body.userEmail, 'User email');
+
+    const result = await course.addUser(Number(courseId), body.userEmail);
+
+    return res.status(StatusCodes.OK).json(result);
+  } catch (error) {
+    return getDefaultErrorRes(error, res);
+  }
+}
+
+async function removeUser(req: express.Request, res: express.Response) {
+  try {
+    const { courseId } = req.params;
+    const body = req.body as UserIdRequestBody;
+
+    assertCourseIdIsValid(courseId);
+    assertUserIdIsValid(body.userId);
+
+    const result = await course.removeUser(Number(courseId), Number(body.userId));
+
+    return res.status(StatusCodes.OK).json(result);
+  } catch (error) {
+    return getDefaultErrorRes(error, res);
+  }
+}
+
+async function getProjects(req: express.Request, res: express.Response) {
+  try {
+    const { courseId } = req.params;
+
+    assertCourseIdIsValid(courseId);
+
+    const result = await course.getProjects(res.locals.policyConstraint, Number(courseId));
+
+    return res.status(StatusCodes.OK).json(result);
+  } catch (error) {
+    return getDefaultErrorRes(error, res);
+  }
+}
+
+async function addProject(req: express.Request, res: express.Response) {
+  try {
+    const { courseId } = req.params;
+    const body = req.body as ProjectIdRequestBody;
+
+    assertCourseIdIsValid(courseId);
+    assertProjectIdIsValid(body.projectId);
+
+    const result = await course.addProject(Number(courseId), Number(body.projectId));
+
+    return res.status(StatusCodes.OK).json(result);
+  } catch (error) {
+    return getDefaultErrorRes(error, res);
+  }
+}
+
+async function removeProject(req: express.Request, res: express.Response) {
+  try {
+    const { courseId } = req.params;
+    const body = req.body as ProjectIdRequestBody;
+
+    assertCourseIdIsValid(courseId);
+    assertProjectIdIsValid(body.projectId);
+
+    const result = await course.removeProject(Number(courseId), Number(body.projectId));
+
+    return res.status(StatusCodes.OK).json(result);
+  } catch (error) {
+    return getDefaultErrorRes(error, res);
+  }
+}
+
+async function addProjectAndCourse(req: express.Request, res: express.Response) {
+  try {
+    const body = req.body as AddProjectAndCourseRequestBody;
+    const userSession = res.locals.userSession as UserSession | undefined;
+
+    assertUserSessionIsValid(userSession);
+    assertCourseCodeIsValid(body.courseCode);
+    assertCourseYearIsNumber(body.courseYear);
+    assertCourseSemIsNumber(body.courseSem);
+    assertProjectNameIsValid(body.projectName);
+    assertCourseNameIsValid(body.courseName);
+
+    const result = await course.addProjectAndCourse(
+      userSession.user_id,
+      body.courseCode,
+      Number(body.courseYear),
+      Number(body.courseSem),
+      body.courseName,
+      body.projectName,
+      body.projectKey,
+      body.isCoursePublic,
+      body.isProjectPublic,
+      body.projectDescription,
+      body.courseDescription,
+    );
+
+    return res.status(StatusCodes.OK).json(result);
+  } catch (error) {
+    return getDefaultErrorRes(error, res);
+  }
+}
+
+async function importCsv(req: express.Request, res: express.Response) {
+  let convertedCsvPath: string | undefined;
+  try {
+    const { courseId } = req.params;
+
+    assertInputIsNotEmpty(req.file, 'Csv file');
+    assertCourseIdIsValid(courseId);
+
+    const isXlsx = req.file.mimetype === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      || req.file.originalname?.endsWith('.xlsx');
+    const isCsv = req.file.mimetype.includes('csv');
+
+    if (!isXlsx && !isCsv) {
+      throw new Error('Invalid file type. File must be CSV or XLSX.');
+    }
+
+    let filePath = req.file.path;
+    if (isXlsx) {
+      convertedCsvPath = await convertXlsxToCsv(req.file.path);
+      filePath = convertedCsvPath;
+    }
+
+    const result = await csvService.importCourseData(filePath, Number(courseId));
+    return res.status(StatusCodes.OK).json(result);
+  } catch (error) {
+    return getDefaultErrorRes(error, res);
+  } finally {
+    if (req.file?.path) {
+      fs.unlinkSync(req.file.path);
+    }
+    if (convertedCsvPath && fs.existsSync(convertedCsvPath)) {
+      fs.unlinkSync(convertedCsvPath);
+    }
+  }
+}
+
+async function archiveCourse(req: express.Request, res: express.Response) {
+  try {
+    const { courseId } = req.params;
+
+    assertCourseIdIsValid(courseId);
+
+    const result = await course.archiveCourse(Number(courseId));
+    return res.status(StatusCodes.OK).json(result);
+  } catch (error) {
+    return getDefaultErrorRes(error, res);
+  }
+}
+
+async function unarchiveCourse(req: express.Request, res: express.Response) {
+  try {
+    const { courseId } = req.params;
+
+    assertCourseIdIsValid(courseId);
+
+    const result = await course.unarchiveCourse(Number(courseId));
+    return res.status(StatusCodes.OK).json(result);
+  } catch (error) {
+    return getDefaultErrorRes(error, res);
+  }
+}
+
+async function importProjectAssignments(req: express.Request, res: express.Response) {
+  try {
+    const { courseId } = req.params;
+
+    assertInputIsNotEmpty(req.file, 'Csv file');
+    assertFileIsCorrectType(req.file.mimetype, 'csv');
+    assertCourseIdIsValid(courseId);
+
+    const result = await csvService.importProjectAssignments(req.file.path, Number(courseId));
+    return res.status(StatusCodes.OK).json(result);
+  } catch (error) {
+    return getDefaultErrorRes(error, res);
+  } finally {
+    if (req.file?.path) {
+      fs.unlinkSync(req.file.path);
+    }
+  }
+}
+
+async function getLatestSprintInsightsForCourseProjects(req: express.Request, res: express.Response) {
+  try {
+    const { courseId } = req.params;
+
+    assertCourseIdIsValid(courseId);
+
+    const result = await course.getLatestSprintInsightsForCourseProjects(Number(courseId));
+    return res.status(StatusCodes.OK).json(result);
+  } catch (error) {
+    return getDefaultErrorRes(error, res);
+  }
+}
+
+async function getImportTemplate(req: express.Request, res: express.Response) {
+  try {
+    const { courseId } = req.params;
+    assertCourseIdIsValid(courseId);
+
+    const projects = await course.getProjects(res.locals.policyConstraint, Number(courseId));
+    const users = await course.getUsers(Number(courseId));
+
+    const workbook = new ExcelJS.Workbook();
+    const sheet = workbook.addWorksheet('Import Data');
+
+    // Headers and column widths
+    sheet.addRow(['email', 'name', 'password', 'role', 'projectKey', 'projectName']);
+    sheet.getRow(1).font = { bold: true };
+    sheet.columns = [
+      { width: 30 }, // A: email
+      { width: 25 }, // B: name
+      { width: 25 }, // C: password
+      { width: 20 }, // D: role
+      { width: 30 }, // E: projectKey
+      { width: 30 }, // F: projectName
+    ];
+
+    // Example row (skipped during import)
+    sheet.addRow(['Student Email', 'Student Name', 'For Non-SSO emails (Optional)', 'STUDENT or FACULTY', 'Short project identifier (Optional)', 'Name of the project']);
+    sheet.getRow(2).font = { italic: true, color: { argb: 'FF888888' } };
+
+    // User lookup: hidden columns G (email) & H (name) for VLOOKUP
+    if (users.length > 0) {
+      sheet.getCell('G1').value = '_email';
+      sheet.getCell('H1').value = '_name';
+      users.forEach((u, i) => {
+        sheet.getCell(`G${i + 2}`).value = u.user_email;
+        sheet.getCell(`H${i + 2}`).value = u.user_display_name;
+      });
+      const placeholderRow = users.length + 2;
+      sheet.getCell(`G${placeholderRow}`).value = '<Enter New Email>';
+      sheet.getCell(`H${placeholderRow}`).value = '<Enter New Name>';
+      sheet.getColumn(7).hidden = true;
+      sheet.getColumn(8).hidden = true;
+
+      // Email dropdown (column A) — selecting auto-populates name via VLOOKUP
+      const emailOptions = [...users.map((u) => u.user_email), '<Enter New Email>'];
+      addDropdownValidation(sheet, 'A', emailOptions);
+
+      // Name (column B) — auto-populated from email via VLOOKUP
+      for (let row = TEMPLATE_DATA_START_ROW; row <= TEMPLATE_DATA_END_ROW; row++) {
+        sheet.getCell(`B${row}`).value = {
+          formula: `IFERROR(VLOOKUP(A${row},$G$2:$H$${placeholderRow},2,FALSE),"")`,
+        };
+      }
+    }
+
+    // Role dropdown (column D)
+    addDropdownValidation(sheet, 'D', ['STUDENT', 'FACULTY'], true, 'Please select STUDENT or FACULTY');
+
+    // Project name dropdown (column F)
+    const projectOptions = [...projects.map((p) => p.pname), '<Enter New Project Name>'];
+    addDropdownValidation(sheet, 'F', projectOptions);
+
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', 'attachment; filename=importCourseData.xlsx');
+    await workbook.xlsx.write(res);
+    return res.end();
+  } catch (error) {
+    return getDefaultErrorRes(error, res);
+  }
+}
+
+export default {
+  getAll,
+  get,
+  create,
+  bulkCreate,
+  update,
+  remove,
+  getUsers,
+  addUser,
+  removeUser,
+  getProjects,
+  addProject,
+  removeProject,
+  addProjectAndCourse,
+  importCsv,
+  archiveCourse,
+  unarchiveCourse,
+  importProjectAssignments,
+  getLatestSprintInsightsForCourseProjects,
+  getImportTemplate,
+};

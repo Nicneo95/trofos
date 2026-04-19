@@ -1,0 +1,9 @@
+.overflow-scroll-container {
+  height: 0;
+  flex-grow: 1;
+  overflow: auto;
+}
+
+.footer-tabs .ant-tabs-nav {
+  margin: 0 !important;
+}

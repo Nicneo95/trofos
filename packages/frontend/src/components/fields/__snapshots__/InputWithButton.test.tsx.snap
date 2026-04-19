@@ -1,0 +1,35 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`test InputWithButton > when rendering > should render correct fields 1`] = `
+<body>
+  <div>
+    <div
+      class="ant-space ant-space-horizontal ant-space-align-center ant-space-gap-row-small ant-space-gap-col-small"
+      style="display: flex;"
+    >
+      <div
+        class="ant-space-item"
+      >
+        <input
+          class="ant-input ant-input-outlined"
+          placeholder="placeholder"
+          type="text"
+          value=""
+        />
+      </div>
+      <div
+        class="ant-space-item"
+      >
+        <button
+          class="ant-btn ant-btn-default ant-btn-color-default ant-btn-variant-outlined"
+          type="submit"
+        >
+          <span>
+            ok
+          </span>
+        </button>
+      </div>
+    </div>
+  </div>
+</body>
+`;

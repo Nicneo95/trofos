@@ -1,0 +1,22 @@
+.project-backlog-status-draggable {
+  padding-right: 22px;
+  display: flex;
+  margin-bottom: 16px;
+  position: relative;
+}
+
+.project-backlog-status-draggable .ant-form-item {
+  margin-bottom: 0;
+  width: 100%;
+}
+
+.project-backlog-status-draggable .ant-input-group-addon:last-child {
+  background-color: red;
+}
+
+.project-backlog-status-delete-button {
+  display: flex;
+  align-items: center;
+  padding: 0 2px;
+  cursor: pointer;
+}

@@ -1,0 +1,32 @@
+{
+  "name": "trofos-playwright-tests",
+  "version": "1.0.0",
+  "description": "Playwright e2e tests for Trofos",
+  "scripts": {
+    "test": "playwright test -c playwright.qa.config.ts",
+    "test:all": "playwright test -c playwright.qa.config.ts --grep-invert \"\\[Logout\\]\"",
+    "test:all:with-logout": "playwright test -c playwright.qa.config.ts",
+    "test:headed": "playwright test -c playwright.qa.config.ts --headed",
+    "test:ui": "playwright test -c playwright.qa.config.ts --ui",
+    "test:dashboard": "playwright test -c playwright.qa.config.ts tests/1-dashboard.spec.ts",
+    "test:navigation": "playwright test -c playwright.qa.config.ts tests/2-navigation.spec.ts",
+    "test:sprints": "playwright test -c playwright.qa.config.ts tests/3-sprints.spec.ts",
+    "test:board": "playwright test -c playwright.qa.config.ts tests/4-board.spec.ts",
+    "test:issues": "playwright test -c playwright.qa.config.ts tests/5-issues.spec.ts",
+    "test:standup": "playwright test -c playwright.qa.config.ts tests/6-standup.spec.ts",
+    "test:feedback": "playwright test -c playwright.qa.config.ts tests/7-feedback.spec.ts",
+    "test:milestones": "playwright test -c playwright.qa.config.ts tests/8-milestones.spec.ts",
+    "test:users": "playwright test -c playwright.qa.config.ts tests/9-users.spec.ts",
+    "test:admin": "playwright test -c playwright.qa.config.ts tests/10-admin.spec.ts",
+    "test:logout": "playwright test -c playwright.qa.config.ts tests/11-logout.spec.ts",
+    "report": "playwright show-report --config=playwright.qa.config.ts"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.44.0",
+    "@types/node": "^24.5.2",
+    "typescript": "^5.4.0"
+  },
+  "dependencies": {
+    "dotenv": "^17.3.1"
+  }
+}

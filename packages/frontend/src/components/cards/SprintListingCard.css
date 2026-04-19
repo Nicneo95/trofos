@@ -1,0 +1,39 @@
+li.sprint-card-container.ant-list-item {
+  border-radius: 8px;
+  padding: 0;
+  margin: 3px 0;
+}
+
+.sprint-card-container .ant-collapse > .ant-collapse-item > .ant-collapse-header {
+  align-items: center;
+}
+
+.sprint-card-inner-container {
+  display: flex;
+  align-items: center;
+}
+
+.sprint-card-container > div {
+  width: 100%;
+}
+
+.sprint-card-name {
+  display: flex;
+  flex: 1 1 0%;
+}
+
+.sprint-card-setting-icon {
+  padding: 0 6px 0 10px;
+}
+
+.sprint-status-button {
+  margin: 0 10px;
+}
+
+.sprint-card-button {
+  margin-right: 10px;
+}
+
+.sprint-card-notes-icon {
+  padding-left: 6px;
+}

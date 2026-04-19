@@ -1,0 +1,14 @@
+li.backlog-card-container.ant-list-item {
+  padding: 0;
+  /* border-block-end: none; */
+}
+
+.backlog-card-container > div > div {
+  margin-right: 8px;
+}
+
+.backlog-card-id {
+  word-break: break-all;
+  width: 60px;
+  margin-top: 4px;
+}

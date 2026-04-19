@@ -1,0 +1,63 @@
+{
+  "name": "trofos",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "generate": "lerna run prisma-generate-dev",
+    "migrate:reset": "lerna run prisma-migrate-reset --scope=backend",
+    "seed": "lerna run prisma-seed-dev --scope=backend",
+    "start-prod": "docker compose -f docker-compose-production.yml --env-file .env  up -d",
+    "start-dev": "docker compose -f docker-compose-development.yml --env-file .env  up -d && lerna run --parallel start-dev",
+    "start": "lerna run --parallel start",
+    "test": "lerna run test --stream",
+    "setup:ci": "docker compose -f docker-compose-ci.yml up -d postgres redis",
+    "cleanup:prod": "docker compose -f docker-compose-production.yml down",
+    "cleanup:dev": "docker compose -f docker-compose-development.yml down",
+    "cleanup:ci": "docker compose -f docker-compose-ci.yml down && docker stop frontend || true && docker stop backend || true",
+    "commit": "cz",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx --fix && stylelint **/*.css --fix",
+    "prettier": "prettier --write .",
+    "format": "pnpm run lint && pnpm run prettier"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Project-Trofos/trofos.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/Project-Trofos/trofos/issues"
+  },
+  "homepage": "https://github.com/Project-Trofos/trofos#readme",
+  "devDependencies": {
+    "@types/node": "^18.7.8",
+    "@types/selenium-webdriver": "^4.1.5",
+    "@typescript-eslint/eslint-plugin": "^5.33.1",
+    "@typescript-eslint/parser": "^5.33.1",
+    "cz-conventional-changelog": "^3.3.0",
+    "eslint": "^8.22.0",
+    "eslint-config-airbnb": "^19.0.4",
+    "eslint-config-airbnb-typescript": "^17.0.0",
+    "eslint-config-prettier": "^8.5.0",
+    "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-promise": "^6.0.0",
+    "lerna": "^5.4.3",
+    "prettier": "^2.7.1",
+    "selenium-webdriver": "^4.4.0",
+    "stylelint": "^14.11.0",
+    "stylelint-config-prettier": "^9.0.3",
+    "stylelint-config-standard": "^28.0.0",
+    "typescript": "^4.7.4"
+  },
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  },
+  "workspaces": [
+    "packages/*"
+  ],
+  "private": true
+}

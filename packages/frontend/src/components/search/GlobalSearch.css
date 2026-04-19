@@ -1,0 +1,23 @@
+.search-container .ant-input {
+  border: none;
+  outline: none;
+}
+
+.search-container .ant-input:focus {
+  box-shadow: none;
+}
+
+.search-input {
+  width: 200px;
+  transition: all 0.1s ease-in-out;
+}
+
+/* .search-input-hidden {
+  width: 0;
+  overflow: hidden;
+} */
+
+.search-icon:hover {
+  color: var(--sider-bg-color);
+  transition: all 0.2s ease-in-out;
+}
