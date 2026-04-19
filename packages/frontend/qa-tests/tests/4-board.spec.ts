@@ -99,6 +99,9 @@ const boardTest = test.extend<{ authenticatedPage: Page }>({
  *  If the card is not found in fromZoneId (e.g. due to CI retry ordering),
  *  it falls back to whichever zone actually contains a card. */
 async function dragCard(page: Page, fromZoneId: string, toZoneId: string) {
+  // Wait for at least one card to be visible before scanning zones (board may still be rendering)
+  await page.locator('[data-rbd-drag-handle-draggable-id]').first().waitFor({ state: 'visible', timeout: 15000 }).catch(() => {});
+
   // Try the expected source zone first; fall back to any zone that has a card
   let actualFromZoneId = fromZoneId;
   const expectedZone = page.locator(`[data-rbd-droppable-id="${fromZoneId}"]`).first();

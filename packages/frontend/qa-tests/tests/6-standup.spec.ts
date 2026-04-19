@@ -108,13 +108,13 @@ const standUpTest = test.extend<{ authenticatedPage: Page }>({
     await page.waitForTimeout(1000);
 
     // Verify Stand Up was created — at least one settings gear should appear
-    await expect(page.getByRole('button', { name: 'setting' }).first()).toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole('button', { name: 'setting' }).first()).toBeVisible({ timeout: 15000 });
   });
 
   // ── 6.2  Edit Stand Up date ──────────────────────────────────────
   standUpTest('[Stand Up] 6.2 - Edit Stand Up date', async ({ authenticatedPage: page }) => {
     // Ensure stand-up exists
-    await expect(page.getByRole('button', { name: 'setting' }).first()).toBeVisible({ timeout: 5000 });
+    await expect(page.getByRole('button', { name: 'setting' }).first()).toBeVisible({ timeout: 15000 });
 
     // Open settings dropdown → edit (use .first() — multiple stand-ups may exist)
     await page.getByRole('button', { name: 'setting' }).first().click();

@@ -174,7 +174,7 @@ issueTest('[Issues] 5.4 - Delete comment on issue', async ({ authenticatedPage: 
     const menuIcon = page.locator('.anticon.anticon-menu').first();
     if (!await menuIcon.isVisible({ timeout: 2000 }).catch(() => false)) break;
     await menuIcon.click();
-    await page.getByText('Delete').click();
+    await page.getByText('Delete', { exact: true }).click();
     await page.getByRole('button', { name: 'Delete' }).click();
     await page.waitForTimeout(500);
   }
