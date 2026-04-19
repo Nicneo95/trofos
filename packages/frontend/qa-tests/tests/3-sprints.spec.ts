@@ -363,10 +363,11 @@ sprintTest('[Sprint] 3.4 - Sprint lifecycle: start, complete, retrospective', as
   await page.locator('[data-tour="complete-sprint-button"]').click();
 
   // Wait for the Retrospective button to appear after the mutation re-renders the component
-  await expect(page.locator('[data-tour="retrospective-tab"]')).toBeVisible({ timeout: 20000 });
+  // Scope to sprintCard to avoid strict-mode violation when multiple completed sprints are visible
+  await expect(sprintCard.locator('[data-tour="retrospective-tab"]')).toBeVisible({ timeout: 20000 });
 
   // Click Retrospective
-  await page.locator('[data-tour="retrospective-tab"]').click();
+  await sprintCard.locator('[data-tour="retrospective-tab"]').click();
   await page.waitForURL(/\/sprint\/\d+\/retrospective/, { timeout: 5000 });
   await expect(page).toHaveURL(/\/sprint\/\d+\/retrospective/);
 
